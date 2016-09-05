@@ -1,0 +1,10 @@
+{
+	"name": "cod4x_http_plugin",
+	"description": "CoD4X Server Plugin supporting http requests via gsc",
+	"copyright": "Copyright © 2015, dom",
+	"authors": ["dom"],
+	"targetType": "dynamicLibrary",
+	"dflags": ["-fPIC"],
+	"dependencies": {
+	}
+}
