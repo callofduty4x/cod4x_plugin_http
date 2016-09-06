@@ -18,5 +18,5 @@ httpget interprets the received contents as a string which can be read from the 
 #### Compiling:
 This plugin is written in D. You can get the needed compiler [here](https://dlang.org/download.html`) and the dub build system [here](https://code.dlang.org/download). To compile the plugin run `dub --arch=x86` in the folder containing `package.json`.
 
-additional planned features:
-* json support
+#### Additional planned features:
+* json support ( on master branch )
