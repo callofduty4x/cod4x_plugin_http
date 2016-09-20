@@ -95,14 +95,27 @@ class AsyncHttp
 	{	
 		while(!done)
 		{			
+			if(req == null)
+			{
+				printf("[ERROR] couldnt create request\n");
+				done = true;
+				return;
+			}
+
 			int errCode = Plugin_HTTP_SendReceiveData(req);
+
+			printf("plugin DATA: %s\n", req.recvmsg.data);
 
 			if(errCode == 1 || errCode == -1) // complete or failed
 				done = true;
 
+			printf("returncode: %d\n", errCode);
+
 			if(errCode == 1) // complete
 			{
 				ubyte* data = req.recvmsg.data + req.headerLength;
+				printf("plugin DATA2: %s\n", data);
+
 				int buflen = req.contentLength;
 				callback(data, buflen);
 			}
@@ -156,7 +169,7 @@ int parseJsonString(string str)
 	return obj;
 }
 
-JSONValue* jsonGet(bool createIfNotExists = false)
+JSONValue* jsonGet(bool createIfNotExists)
 {
 	int handle = Plugin_Scr_GetInt(0);
 	string path = Plugin_Scr_GetString(1).fromStringz;
@@ -186,10 +199,12 @@ JSONValue* jsonGet(bool createIfNotExists = false)
 		}
 		else
 		{
+			writeln("createIfNotExists ", createIfNotExists);
 			if(createIfNotExists)
 			{
 				writeln("create ", p);
 				val.object[p] = JSONValue();
+				val = &val.object[p];	
 			}
 			else
 			{
@@ -206,7 +221,7 @@ extern(C) void jsonGetInt()
 {
 	writeln(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> jsongetit");
 
-	JSONValue* val = jsonGet();
+	JSONValue* val = jsonGet(false);
 	
 	writeln("got value");
 
@@ -239,7 +254,7 @@ extern(C) void jsonGetInt()
 
 extern(C) void jsonGetString()
 {
-	JSONValue* val = jsonGet();
+	JSONValue* val = jsonGet(false);
 	
 	if(val is null)
 	{
