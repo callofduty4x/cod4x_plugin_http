@@ -200,3 +200,8 @@ string Plugin_Scr_GetString( int i)
 	immutable(char*) str = cod4x.functions.Plugin_Scr_GetString(i); 
 	return fromStringz(str);
 }
+
+gentity_t* Plugin_Scr_GetEntity( int i)
+{
+	return cod4x.functions.Plugin_Scr_GetEntity(i);
+}

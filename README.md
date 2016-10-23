@@ -16,13 +16,31 @@ httpget("127.0.0.1/test.php", ::callback);
 httpget interprets the received contents as a string which can be read from the callback
 
 #### Compiling:
-This plugin is written in D. You can get the needed compiler [here](https://dlang.org/download.html`) and the dub build system [here](https://code.dlang.org/download). To compile the plugin run `dub --arch=x86` in the folder containing `package.json`.
-
-#### Additional planned features:
-* json support ( on master branch )
+This plugin is written in D. You can get the needed compiler [here](https://dlang.org/download.html) and the dub build system [here](https://code.dlang.org/download). To compile the plugin run `dub --arch=x86` in the folder containing `package.json`.
 
 
-## JSON example
+# Examples
+## Simply JSON HTTP GET Request
+
+```
+init()
+{
+	for(;;)
+	{
+		httpgetjson("http://freegeoip.net/json/8.8.8.8", ::callback); // get country for 8.8.8.8 every 5 seconds
+		wait 5; 
+	}	
+}
+
+callback(handle)
+{
+	res = jsongetstring(handle, "country_name");
+	jsonreleaseobject(handle); // release the plugin internal json data
+	iprintln(res); // prints country name
+}                                                                 
+```
+
+## Get deeply nested data in a JSON HTTP GET Request
 
 test.php:
 ```
@@ -48,11 +66,12 @@ test.php:
             }                                                                             
         ]                                                                                 
     }                                                                                     
-}                                                                                         
+}    
 ```
 
 _somescript.gsc:
 ```
+
 init()
 {
 	for(;;)
@@ -72,3 +91,36 @@ callback(handle)
 	jsonreleaseobject(handle);
 }
 ```
+
+## JSON HTTP POST Request
+
+Authentication example
+
+GSC:
+```
+onPlayerConnect()
+{
+	for(;;)
+	{
+		level waittill ( "connecting", player );
+		
+		sid = player getsteamid64();
+		pid = player getplayerid64();
+		name = player.name;
+		httppostjson("http://test.local/playerjoins", 
+					 "{'steamid64':" + sid + ", 'playerid64':" + pid +", 'name':'" + name + "'}", // JSON encoded post data
+					 ::playerjoinsCallback,
+					 player); // if a entity is provided "self" is set in the callback 
+	
+		player thread onPlayerSpawned();
+	}
+}
+
+playerjoinsCallback(handle)
+{
+	self iprintln("joined"); // self is set to the connected player
+	jsonreleaseobject(handle);
+}
+```
+
+
