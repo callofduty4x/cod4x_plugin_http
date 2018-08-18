@@ -16,7 +16,7 @@ httpget("127.0.0.1/test.php", ::callback);
 httpget interprets the received contents as a string which can be read from the callback
 
 #### Compiling:
-This plugin is written in D. You can get the needed compiler [here](https://dlang.org/download.html) and the dub build system [here](https://code.dlang.org/download). To compile the plugin run `dub --arch=x86` in the folder containing `package.json`.
+This plugin is written in D. You can get the needed compiler [here](https://dlang.org/download.html) and the dub build system [here](https://code.dlang.org/download). To compile the plugin run `dub --arch=x86 --build=release` in the folder containing `package.json`.
 
 
 # Examples
@@ -34,6 +34,11 @@ init()
 
 callback(handle)
 {
+	if(handle == 0)
+	{
+		//error parsing json. Do something about this error case
+		return;
+	}
 	res = jsongetstring(handle, "country_name");
 	jsonreleaseobject(handle); // release the plugin internal json data
 	iprintln(res); // prints country name
@@ -85,6 +90,12 @@ init()
 
 callback(handle)
 {
+	if(handle == 0)
+	{
+		//error parsing json. Do something about this error case
+		return;
+	}
+
 	jsonsetstring(handle, "contents.quotes.0.magic", "val"); // sets magic to "val"
 	jsongetstring(handle, "contents.quotes.0.magic"); // returns "val"
 	jsongetstring(handle, "contents.quotes.0.quote"); // returns "If you cannot do great things, do small things in a great way."

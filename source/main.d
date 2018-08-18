@@ -41,9 +41,32 @@ extern (C) void OnInfoRequest(pluginInfo_t *info)
 	info.pluginVersion = version_t(0, 1);
 }
 
+void dbgwriteln(T...)(T args)
+{
+    debug
+    {
+
+        static if (T.length == 0)
+        {
+		return;
+        }
+        string s;
+        foreach(arg; args)
+        {
+            s = s ~ to!string(arg);
+        }
+
+        Plugin_Printf("Http-Plugin: %s\n", s.toStringz);
+
+    }
+}
+
+
+
+
 extern (C) int OnInit()
 {
-	writeln("init ", Runtime.initialize());
+	Plugin_Printf("HTTP plugin init %d\n", Runtime.initialize());
 	Plugin_ScrAddFunction("httpGet", &httpget);
 	Plugin_ScrAddFunction("httpGetJson", &httpGetJson);
 	Plugin_ScrAddFunction("httpPostJson", &httpPostJson);
@@ -53,13 +76,7 @@ extern (C) int OnInit()
 	Plugin_ScrAddFunction("jsonSetString", &jsonSetString);
 	Plugin_ScrAddFunction("jsonReleaseObject", &releaseJsonObject);
 
-	
 	return 0;
-}
-
-extern(C) void conprint()
-{
-	Plugin_Printf("%s\n", Plugin_Scr_GetString(0));
 }
 
 extern (C) void OnExitLevel()
@@ -113,7 +130,7 @@ class AsyncHttp
 			immutable(char*) data = postdata.toStringz; //"{\"name\":   \"Bender\", \"hind\":   \"Bitable\", \"shiny\":  true}".toStringz;
 			char* p = cast(char*)data; // hackme
 
-			printf("ENCODED: %s\n", buf.ptr);
+			dbgwriteln("ENCODED: ", buf.ptr);
 
 			import core.stdc.string;
 			req = Plugin_HTTP_MakeHttpRequest(
@@ -139,24 +156,20 @@ class AsyncHttp
 		{			
 			if(req == null)
 			{
-				printf("[ERROR] couldnt create request\n");
+				Plugin_Printf("[ERROR] couldnt create request\n");
 				done = true;
 				return;
 			}
 
 			int errCode = Plugin_HTTP_SendReceiveData(req);
 
-			//printf("plugin DATA: %s\n", req.recvmsg.data);
-
 			if(errCode == 1 || errCode == -1) // complete or failed
 				done = true;
-
-			//printf("returncode: %d\n", errCode);
 
 			if(done && req.contentLength > 0) // complete
 			{
 				ubyte* data = req.recvmsg.data + req.headerLength;
-				printf("plugin DATA2: %s\n", data);
+				dbgwriteln("plugin DATA2: ", data);
 
 				int buflen = req.contentLength;
 				callback(data, buflen);
@@ -193,7 +206,7 @@ JSONValue[int] jsonStore; // global json variable store
 
 int newJsonId()
 {
-	for(int i = 0; i < int.max; ++i)
+	for(int i = 1; i < int.max; ++i)
 	{
 		if(i !in jsonStore)
 		{
@@ -204,10 +217,18 @@ int newJsonId()
 	assert(0);
 }
 
-int parseJsonString(string str)
+int parseJsonString(string str) //Returns 0 in error case
 {
 	int obj = newJsonId();
-	jsonStore[obj] = parseJSON(str);
+	try
+	{
+		jsonStore[obj] = parseJSON(str);
+	}
+	catch(JSONException e)
+	{
+		Plugin_Printf("Error parsing Json: %s\n", e);
+		return 0;
+	}
 	return obj;
 }
 
@@ -216,20 +237,19 @@ JSONValue* jsonGet(bool createIfNotExists)
 	int handle = Plugin_Scr_GetInt(0);
 	string path = Plugin_Scr_GetString(1).fromStringz;
 
-	writeln(handle, " ", path);
+	dbgwriteln(handle, " ", path);
 
-	if(handle !in jsonStore) // does handle exist ?
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
 		return null;
-
-	writeln("found handle");
+	}
 
 	JSONValue* val = &jsonStore[handle];
-
 	string[] pathparts = path.split(".");
 
 	foreach(string p; pathparts) // follow the path
 	{
-		writeln("check ", p);
+		dbgwriteln("check ", p);
 
 		if(val.type == JSON_TYPE.ARRAY)
 		{
@@ -241,16 +261,16 @@ JSONValue* jsonGet(bool createIfNotExists)
 		}
 		else
 		{
-			writeln("createIfNotExists ", createIfNotExists);
+			dbgwriteln("createIfNotExists ", createIfNotExists);
 			if(createIfNotExists)
 			{
-				writeln("create ", p);
+				dbgwriteln("create ", p);
 				val.object[p] = JSONValue();
 				val = &val.object[p];	
 			}
 			else
 			{
-				writeln("not found ", p);
+				dbgwriteln("not found ", p);
 				return null;
 			}
 		}
@@ -261,19 +281,16 @@ JSONValue* jsonGet(bool createIfNotExists)
 
 extern(C) void jsonGetInt()
 {
-	writeln(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> jsongetit");
+	dbgwriteln("jsonGetInt()...");
 
 	JSONValue* val = jsonGet(false);
 	
-	writeln("got value");
-
 	if(val is null)
 	{
+		dbgwriteln("Value not found");
 		Plugin_Scr_AddUndefined();
 		return;
 	}
-
-	writeln("blablub");
 
 	int x;
 	if (val.type() == JSON_TYPE.INTEGER)
@@ -289,7 +306,7 @@ extern(C) void jsonGetInt()
 		}
 	}
 
-	writeln("value: ", x);
+	dbgwriteln("value: ", x);
 	
 	Plugin_Scr_AddInt(x);
 }
@@ -304,7 +321,7 @@ extern(C) void jsonGetString()
 		return;
 	}
 	
-	writeln(val.str);
+	dbgwriteln(val.str);
 	Plugin_Scr_AddString(val.str.toStringz);
 }
 
@@ -355,12 +372,12 @@ extern(C) void releaseJsonObject()
 // depth first search a json object
 void jsonDFS(string key, JSONValue val, int depth)
 {
-	for(int i=0;i<depth;++i)
-		printf(" ");
-
+/*	for(int i=0;i<depth;++i)
+		Plugin_Printf(" ");
+*/
 	if(val.type == JSON_TYPE.ARRAY)
 	{
-		Scr_MakeArray(); writeln("Scr_MakeArray");
+		Scr_MakeArray(); dbgwriteln("Scr_MakeArray");
 
 		foreach(i, v; val.array)
 		{
@@ -369,7 +386,7 @@ void jsonDFS(string key, JSONValue val, int depth)
 	}
 	else if(val.type == JSON_TYPE.OBJECT) 
 	{
-		Scr_MakeArray(); writeln("Scr_MakeArray");
+		Scr_MakeArray(); dbgwriteln("Scr_MakeArray");
 
 		foreach(k, v; val.object)
 		{
@@ -378,42 +395,42 @@ void jsonDFS(string key, JSONValue val, int depth)
 	}
 	else if(val.type == JSON_TYPE.NULL)
 	{
-		Scr_AddUndefined(); writeln("Scr_AddUndefined");
+		Scr_AddUndefined(); dbgwriteln("Scr_AddUndefined");
 	}
 	else if(val.type == JSON_TYPE.STRING)
 	{
-		Scr_AddString(val.str.toStringz()); writeln("Scr_AddString");
+		Scr_AddString(val.str.toStringz()); dbgwriteln("Scr_AddString");
 	}
 	else if(val.type == JSON_TYPE.INTEGER)
 	{
-		Scr_AddInt(val.integer().to!int); writeln("Scr_AddInt");
+		Scr_AddInt(val.integer().to!int); dbgwriteln("Scr_AddInt");
 	}
 	else if(val.type == JSON_TYPE.UINTEGER)
 	{
-		Scr_AddInt(val.integer().to!int); writeln("Scr_AddInt");
+		Scr_AddInt(val.integer().to!int); dbgwriteln("Scr_AddInt");
 	}
 	else if(val.type == JSON_TYPE.FLOAT)
 	{
-		Scr_AddFloat(val.floating()); writeln("Scr_AddFloat");
+		Scr_AddFloat(val.floating()); dbgwriteln("Scr_AddFloat");
 	}
 	else if(val.type == JSON_TYPE.TRUE)
 	{
-		Scr_AddBool(1); writeln("Scr_AddBool");
+		Scr_AddBool(1); dbgwriteln("Scr_AddBool");
 	}
 	else if(val.type == JSON_TYPE.FALSE)
 	{
-		Scr_AddBool(0); writeln("Scr_AddBool");
+		Scr_AddBool(0); dbgwriteln("Scr_AddBool");
 	}
 
 	if(depth != 0)
 	{
 		if(key == "") 
 		{
-			Scr_AddArray(); writeln("Scr_AddArray");
+			Scr_AddArray(); dbgwriteln("Scr_AddArray");
 		}
 		else
 		{
-			Scr_AddArrayKey(Scr_AllocString(key.toStringz)); writeln("Scr_AddArrayKey ", key);
+			Scr_AddArrayKey(Scr_AllocString(key.toStringz)); dbgwriteln("Scr_AddArrayKey ", key);
 		}
 	}
 }
@@ -440,7 +457,7 @@ extern(C) void httpGetJson()
 		}
 		catch(Exception e)
 		{
-			writeln("json parsing failed: ", e.msg);
+			dbgwriteln("json parsing failed: ", e.msg);
 		}
 	});*/
 
