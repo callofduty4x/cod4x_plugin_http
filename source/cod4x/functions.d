@@ -1,6 +1,6 @@
 module cod4x.functions;
 
-import cod4x.server;
+import cod4x.structs;
 
 extern (C) char* Plugin_Cmd_Argv(int arg);                // Get a command argument with index arg.
 extern (C) int Plugin_Cmd_Argc();                         // Get number of command arguments
@@ -70,7 +70,6 @@ extern (C) char *Plugin_NET_AdrToStringShort (netadr_t *a);
 
 //      == Plugin Handler's functions ==
 
-extern (C) clientScoreboard_t Plugin_GetClientScoreboard(int clientNum);    // Get the scoreboard of a player
 extern (C) int Plugin_Cmd_GetInvokerUid();                                  // Get UID of command invoker
 extern (C) int Plugin_Cmd_GetInvokerSlot();                                 // Get slot number of command invoker
 extern (C) int Plugin_GetPlayerUid(int slot);                               // Get UID of a plyer
@@ -131,12 +130,10 @@ extern (C) void Plugin_ScrAddFunction(immutable(char)* name, Fun fun);
 extern (C) void Plugin_ScrReplaceFunction(immutable(char)* name, Fun fun);
 //extern (C) void Plugin_ScrReplaceMethod(char *name, xfunction_t function);
 
-extern (C) void Plugin_Scr_AddEntity(gentity_t* ent);
 extern (C) int Plugin_Scr_GetNumParam();
 extern (C) int Plugin_Scr_GetInt( int );
 extern (C) float Plugin_Scr_GetFloat( int );
 extern (C) immutable(char*) Plugin_Scr_GetString( int );
-extern (C) gentity_t* Plugin_Scr_GetEntity( int );
 extern (C) short Plugin_Scr_GetConstString( int );
 extern (C) int Plugin_Scr_GetType( int );
 extern (C) void Plugin_Scr_GetVector( int, vec3_t* );
@@ -151,23 +148,16 @@ extern (C) void Plugin_Scr_AddUndefined();
 extern (C) void Plugin_Scr_AddVector( vec3_t vec );
 extern (C) void Plugin_Scr_AddArray( );
 extern (C) void Plugin_Scr_MakeArray( );
-extern (C) short Plugin_Scr_ExecEntThread( gentity_t* ent, int callbackHook, int numArgs);
 extern (C) short Plugin_Scr_ExecThread( int callbackHook, int numArgs);
 extern (C) void Plugin_Scr_FreeThread( short threadId);
-
+extern (C) gentity_t* Plugin_Scr_GetEntity( int );
 
 
 extern (C) void Plugin_Scr_NotifyLevel(int constString, int numArgs);
 extern (C) void Plugin_Scr_NotifyNum(int entityNum, int entType, int constString, int numArgs);
-extern (C) void Plugin_Scr_Notify(gentity_t* ent, ushort constString, int numArgs);
 extern (C) ushort Plugin_Scr_AllocString(const char*);
 
 
-
-extern (C) playerState_t *Plugin_SV_GameClientNum( int num ); //Retrives the playerState_t* object from a client number
-
-extern (C) gentity_t* Plugin_GetGentityForEntityNum(int entnum);
-extern (C) client_t* Plugin_GetClientForClientNum(int clientnum);
 
 extern (C) char* Plugin_SL_ConvertToString(int index);
 

@@ -7,7 +7,7 @@ import std.json;
 import cod4x.plugin_declarations;
 import cod4x.functions;
 import cod4x.callback_declarations;
-import cod4x.server;
+import cod4x.structs;
 
 extern(C) int Scr_GetFunctionHandle( const char* scriptName, const char* labelName );
 extern(C) int Scr_GetFunc( int i );
@@ -30,7 +30,6 @@ extern(C) void Scr_AddFloat(float val);
 extern(C) void Scr_AddString(const char *string);
 extern(C) void Scr_AddConstString(int strindex);
 extern(C) void Scr_AddUndefined();
-extern(C) void Plugin_Scr_AddEntity(gentity_t* ent);
 extern (C) int Plugin_Scr_GetNumParam();
 
 

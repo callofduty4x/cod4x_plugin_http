@@ -2,7 +2,6 @@ module functions;
 
 import std.string;
 import cod4x.functions;
-import cod4x.server;
 
 int Plugin_Milliseconds() {
 	return cod4x.functions.Plugin_Milliseconds();
@@ -58,21 +57,6 @@ auto Plugin_GetPlayerName(int slot)
 		g[i] = *(erg+i);
 	return g;
 }*/
-
-ubyte[4] Plugin_GetPlayerIP(int slot)
-{
-    // FIXME plz :V
-    client_t* cl = Plugin_GetClientForClientNum(slot);
-    ubyte* uglyptr = cast(ubyte*)cl.netchan.remoteAddress.ip;
-    //uglyptr += 2;
-    
-    ubyte[4] ip;
-    ip[0] = uglyptr[0];
-    ip[1] = uglyptr[1];
-    ip[2] = uglyptr[2];
-    ip[3] = uglyptr[3];
-    return ip;
-}
 
 string Plugin_Cvar_VariableString(string var)
 {
@@ -153,17 +137,6 @@ void Plugin_Scr_AddInt(int value)
 	cod4x.functions.Plugin_Scr_AddInt(value);
 }
 
-void PluginNotifyPlayer(int slot, ushort str, int args)
-{
-	cod4x.server.gentity_t* ent = cod4x.functions.Plugin_GetGentityForEntityNum(slot);
-	cod4x.functions.Plugin_Scr_Notify(ent, str, args);
-}
-
-/*void PluginNotifyLevel(ushort str, int args)
-{
-	cod4x.functions.Plugin_Scr_Notify(str, args);
-}*/
-
 ushort Plugin_Scr_AllocString(string message)
 {
 	return cod4x.functions.Plugin_Scr_AllocString(message.toStringz);
@@ -201,7 +174,3 @@ string Plugin_Scr_GetString( int i)
 	return fromStringz(str);
 }
 
-gentity_t* Plugin_Scr_GetEntity( int i)
-{
-	return cod4x.functions.Plugin_Scr_GetEntity(i);
-}

@@ -23,9 +23,9 @@ module cod4x.plugin_declarations;
 
 //C     #define PLUGIN_HANDLER_VERSION_MAJOR 2
 //C     #define PLUGIN_HANDLER_VERSION_MINOR 302
-const PLUGIN_HANDLER_VERSION_MAJOR = 2;
+const PLUGIN_HANDLER_VERSION_MAJOR = 4;
 //PHandler v. 2.2
-const PLUGIN_HANDLER_VERSION_MINOR = 302;
+const PLUGIN_HANDLER_VERSION_MINOR = 000;
 
 //C     enum Plugin_Err{	// To be used as the code argument for Plugin_Error()
 //C         P_ERROR_WARNING,	// Save the error string to serverlog - for minor errors
