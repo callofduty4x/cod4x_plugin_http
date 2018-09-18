@@ -36,8 +36,8 @@ extern (C) int Plugin_Scr_GetNumParam();
 // plugin meta info
 extern (C) void OnInfoRequest(pluginInfo_t *info)
 {
-	info.handlerVersion = version_t(3, 100);
-	info.pluginVersion = version_t(0, 1);
+	info.handlerVersion = version_t(PLUGIN_HANDLER_VERSION_MAJOR, PLUGIN_HANDLER_VERSION_MINOR);
+	info.pluginVersion = version_t(1, 1);
 }
 
 void dbgwriteln(T...)(T args)
