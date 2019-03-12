@@ -95,7 +95,7 @@ callback(handle)
 		//error parsing json. Do something about this error case
 		return;
 	}
-
+	jsonsetstring(handle, "contents.quotes.size"); //returns count of array elements. In this case it is 1.
 	jsonsetstring(handle, "contents.quotes.0.magic", "val"); // sets magic to "val"
 	jsongetstring(handle, "contents.quotes.0.magic"); // returns "val"
 	jsongetstring(handle, "contents.quotes.0.quote"); // returns "If you cannot do great things, do small things in a great way."
