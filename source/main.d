@@ -225,25 +225,16 @@ int parseJsonString(string str) //Returns 0 in error case
 	}
 	catch(JSONException e)
 	{
-		Plugin_Printf("Error parsing Json: %s\n", e);
+		Plugin_Printf("Error parsing Json: %s\n", e.msg.toStringz);
 		return 0;
 	}
 	return obj;
 }
 
-JSONValue* jsonGet(bool createIfNotExists)
+JSONValue* jsonGet(bool createIfNotExists, JSONValue* val)
 {
-	int handle = Plugin_Scr_GetInt(0);
 	string path = Plugin_Scr_GetString(1).fromStringz;
 
-	dbgwriteln(handle, " ", path);
-
-	if(handle !in jsonStore){ // does handle exist ?
-		dbgwriteln("handle ", handle, " not found");
-		return null;
-	}
-
-	JSONValue* val = &jsonStore[handle];
 	string[] pathparts = path.split(".");
 
 	foreach(string p; pathparts) // follow the path
@@ -252,11 +243,34 @@ JSONValue* jsonGet(bool createIfNotExists)
 
 		if(val.type == JSON_TYPE.ARRAY)
 		{
-			val = &val.array[p.to!int];
+			if(p == "size")
+			{
+				
+				val.integer = val.array.length;
+			}else{
+				int index;
+				try
+				{
+					index = p.to!int;
+				}
+				catch(std.conv.ConvException e)
+				{
+					Plugin_Printf("Error getting json for path=%s, position=%s exception=%s (I think I need an array index here for position)\n", path.toStringz, p.toStringz, e.msg.toStringz);
+					return null;
+				}
+				if(index < 0 || index >= val.array.length)
+				{
+					Plugin_Printf("Error getting json for path=%s, position=%s exception=Array index out of range. Allowed range: 0 to %d\n", path.toStringz, p.toStringz, val.array.length);
+					return null;
+				}
+				dbgwriteln(" Get Array ", index);
+
+				val = &val.array[index];
+			}
 		}
 		else if(val.type == JSON_TYPE.OBJECT && p in val.object) // does handle exist ?
 		{
-			val = &val.object[p];			
+			val = &val.object[p];
 		}
 		else
 		{
@@ -274,7 +288,6 @@ JSONValue* jsonGet(bool createIfNotExists)
 			}
 		}
 	}
-
 	return val;
 }
 
@@ -282,8 +295,16 @@ extern(C) void jsonGetInt()
 {
 	dbgwriteln("jsonGetInt()...");
 
-	JSONValue* val = jsonGet(false);
-	
+	int handle = Plugin_Scr_GetInt(0);
+
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+	JSONValue local = jsonStore[handle];
+	JSONValue* val = jsonGet(false, &local);
+
 	if(val is null)
 	{
 		dbgwriteln("Value not found");
@@ -312,8 +333,16 @@ extern(C) void jsonGetInt()
 
 extern(C) void jsonGetString()
 {
-	JSONValue* val = jsonGet(false);
-	
+	int handle = Plugin_Scr_GetInt(0);
+
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+	JSONValue local = jsonStore[handle];
+	JSONValue* val = jsonGet(false, &local);
+
 	if(val is null)
 	{
 		Plugin_Scr_AddUndefined();
@@ -326,7 +355,16 @@ extern(C) void jsonGetString()
 
 extern(C) void jsonSetString()
 {
-	JSONValue* val = jsonGet(true);
+
+	int handle = Plugin_Scr_GetInt(0);
+
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+
+	JSONValue* val = jsonGet(true, &jsonStore[handle]);
 	string value = Plugin_Scr_GetString(2).fromStringz;
 	
 	if(val is null)
@@ -340,7 +378,15 @@ extern(C) void jsonSetString()
 
 extern(C) void jsonSetInt()
 {
-	JSONValue* val = jsonGet(true);
+
+	int handle = Plugin_Scr_GetInt(0);
+
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+	JSONValue* val = jsonGet(true, &jsonStore[handle]);
 	int value = Plugin_Scr_GetInt(2);
 	
 	if(val is null)
