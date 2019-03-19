@@ -231,11 +231,13 @@ int parseJsonString(string str) //Returns 0 in error case
 	return obj;
 }
 
-JSONValue* jsonGet(bool createIfNotExists, JSONValue* val)
+JSONValue* jsonGet(bool createIfNotExists, JSONValue* val, int* size)
 {
 	string path = Plugin_Scr_GetString(1).fromStringz;
 
 	string[] pathparts = path.split(".");
+
+	*size = -1;
 
 	foreach(string p; pathparts) // follow the path
 	{
@@ -243,10 +245,12 @@ JSONValue* jsonGet(bool createIfNotExists, JSONValue* val)
 
 		if(val.type == JSON_TYPE.ARRAY)
 		{
+			dbgwriteln("Is array at ", p);
 			if(p == "size")
 			{
 				
-				val.integer = val.array.length;
+				*size = val.array.length;
+				return null;
 			}else{
 				int index;
 				try
@@ -270,6 +274,7 @@ JSONValue* jsonGet(bool createIfNotExists, JSONValue* val)
 		}
 		else if(val.type == JSON_TYPE.OBJECT && p in val.object) // does handle exist ?
 		{
+			dbgwriteln("Is object at ", p);
 			val = &val.object[p];
 		}
 		else
@@ -296,15 +301,20 @@ extern(C) void jsonGetInt()
 	dbgwriteln("jsonGetInt()...");
 
 	int handle = Plugin_Scr_GetInt(0);
+	int size;
 
 	if(handle !in jsonStore){ // does handle exist ?
 		dbgwriteln("handle ", handle, " not found");
 		Plugin_Scr_AddUndefined();
 		return;
 	}
-	JSONValue local = jsonStore[handle];
-	JSONValue* val = jsonGet(false, &local);
+	JSONValue* val = jsonGet(false, &jsonStore[handle], &size);
 
+	if(val is null && size > -1)
+	{
+		Plugin_Scr_AddInt(size);
+		return;
+	}
 	if(val is null)
 	{
 		dbgwriteln("Value not found");
@@ -340,17 +350,28 @@ extern(C) void jsonGetString()
 		Plugin_Scr_AddUndefined();
 		return;
 	}
-	JSONValue local = jsonStore[handle];
-	JSONValue* val = jsonGet(false, &local);
+
+	int size;
+
+	JSONValue* val = jsonGet(false, &jsonStore[handle], &size);
 
 	if(val is null)
 	{
+		dbgwriteln("String not found");
 		Plugin_Scr_AddUndefined();
 		return;
 	}
 	
-	dbgwriteln(val.str);
-	Plugin_Scr_AddString(val.str.toStringz);
+	string s;
+	try {
+		s = to!string(val.str);
+	} catch(Exception e) {
+		Plugin_Scr_AddUndefined(); return;
+	}
+
+	dbgwriteln(s);
+
+	Plugin_Scr_AddString(s.toStringz);
 }
 
 extern(C) void jsonSetString()
@@ -363,8 +384,10 @@ extern(C) void jsonSetString()
 		Plugin_Scr_AddUndefined();
 		return;
 	}
+	
+	int size;
 
-	JSONValue* val = jsonGet(true, &jsonStore[handle]);
+	JSONValue* val = jsonGet(true, &jsonStore[handle], &size);
 	string value = Plugin_Scr_GetString(2).fromStringz;
 	
 	if(val is null)
@@ -386,7 +409,10 @@ extern(C) void jsonSetInt()
 		Plugin_Scr_AddUndefined();
 		return;
 	}
-	JSONValue* val = jsonGet(true, &jsonStore[handle]);
+	
+	int size;
+	
+	JSONValue* val = jsonGet(true, &jsonStore[handle], &size);
 	int value = Plugin_Scr_GetInt(2);
 	
 	if(val is null)
