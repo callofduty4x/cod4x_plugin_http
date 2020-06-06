@@ -70,6 +70,7 @@ extern (C) int OnInit()
 	Plugin_ScrAddFunction("httpGetJson", &httpGetJson);
 	Plugin_ScrAddFunction("httpPostJson", &httpPostJson);
 	Plugin_ScrAddFunction("jsonGetInt", &jsonGetInt);
+	Plugin_ScrAddFunction("jsonGetFloat", &jsonGetFloat);
 	Plugin_ScrAddFunction("jsonSetInt", &jsonSetInt);
 	Plugin_ScrAddFunction("jsonGetString", &jsonGetString);
 	Plugin_ScrAddFunction("jsonSetString", &jsonSetString);
@@ -298,7 +299,7 @@ JSONValue* jsonGet(bool createIfNotExists, JSONValue* val, int* size)
 
 extern(C) void jsonGetInt()
 {
-	dbgwriteln("jsonGetInt()...");
+//	dbgwriteln("jsonGetInt()...");
 
 	int handle = Plugin_Scr_GetInt(0);
 	int size;
@@ -336,10 +337,56 @@ extern(C) void jsonGetInt()
 		}
 	}
 
-	dbgwriteln("value: ", x);
+//	dbgwriteln("value: ", x);
 	
 	Plugin_Scr_AddInt(x);
 }
+
+extern(C) void jsonGetFloat() //For CrazY
+{
+//	dbgwriteln("jsonGetFloat()...");
+
+	int handle = Plugin_Scr_GetInt(0);
+	int size;
+
+	if(handle !in jsonStore){ // does handle exist ?
+		dbgwriteln("handle ", handle, " not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+	JSONValue* val = jsonGet(false, &jsonStore[handle], &size);
+
+	if(val is null && size > -1)
+	{
+		Plugin_Scr_AddInt(size);
+		return;
+	}
+	if(val is null)
+	{
+		dbgwriteln("Value not found");
+		Plugin_Scr_AddUndefined();
+		return;
+	}
+
+	float x;
+	if (val.type() == JSON_TYPE.FLOAT)
+	{
+		x = cast(float)val.floating;
+	}
+	else
+	{
+		try {
+			x = to!float(val.str);
+		} catch(Exception e) {
+			Plugin_Scr_AddUndefined(); return;
+		}
+	}
+
+//	dbgwriteln("value: ", x);
+	
+	Plugin_Scr_AddFloat(x);
+}
+
 
 extern(C) void jsonGetString()
 {
