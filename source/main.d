@@ -23,7 +23,7 @@ extern(C) void Plugin_HTTP_CreateString_x_www_form_urlencoded(const char* outenc
 extern(C) int  Scr_AllocString(const char* string);
 extern(C) void Scr_MakeArray();
 extern(C) void Scr_AddArray();
-extern(C) void Scr_AddArrayKey(int key);
+//extern(C) void Scr_AddArrayKey(int key);
 extern(C) void Scr_AddBool(int boolean);
 extern(C) void Scr_AddInt(int val);
 extern(C) void Scr_AddFloat(float val);
@@ -488,11 +488,8 @@ extern(C) void releaseJsonObject()
 }
 
 // depth first search a json object
-void jsonDFS(string key, JSONValue val, int depth)
+/*void jsonDFS(string key, JSONValue val, int depth)
 {
-/*	for(int i=0;i<depth;++i)
-		Plugin_Printf(" ");
-*/
 	if(val.type == JSON_TYPE.ARRAY)
 	{
 		Scr_MakeArray(); dbgwriteln("Scr_MakeArray");
@@ -551,7 +548,7 @@ void jsonDFS(string key, JSONValue val, int depth)
 			Scr_AddArrayKey(Scr_AllocString(key.toStringz)); dbgwriteln("Scr_AddArrayKey ", key);
 		}
 	}
-}
+}*/
 
 extern(C) void httpGetJson()
 {
