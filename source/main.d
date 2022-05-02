@@ -490,9 +490,6 @@ extern(C) void releaseJsonObject()
 // depth first search a json object
 void jsonDFS(string key, JSONValue val, int depth)
 {
-/*	for(int i=0;i<depth;++i)
-		Plugin_Printf(" ");
-*/
 	if(val.type == JSON_TYPE.ARRAY)
 	{
 		Scr_MakeArray(); dbgwriteln("Scr_MakeArray");
